@@ -2,7 +2,7 @@
 ## trainer
 run_train: true
 num_epochs: 30
-batch_size: 64
+batch_size: 6
 checkpoint_dir: results/celeba
 save_checkpoint_freq: 1
 keep_num_checkpoint: 2
@@ -11,7 +11,7 @@ use_logger: true
 log_freq: 500
 
 ## dataloader
-num_workers: 4
+num_workers: 1
 image_size: 64
 load_gt_depth: false
 train_val_data_dir: data/celeba_cropped

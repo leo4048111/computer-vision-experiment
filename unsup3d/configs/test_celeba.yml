@@ -1,13 +1,13 @@
 ## test celeba
 ## trainer
 run_test: true
-batch_size: 64
+batch_size: 6
 checkpoint_dir: results/celeba
-checkpoint_name: checkpoint030.pth
-test_result_dir: results/celeba/test_results_checkpoint030
+checkpoint_name: checkpoint003.pth
+test_result_dir: results/celeba/test_results_checkpoint003
 
 ## dataloader
-num_workers: 4
+num_workers: 1
 image_size: 64
 load_gt_depth: false
 test_data_dir: data/celeba_cropped/test

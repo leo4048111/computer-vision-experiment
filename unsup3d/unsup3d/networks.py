@@ -1,9 +1,31 @@
 import torch
 import torch.nn as nn
 import torchvision
+import numpy as np
 
 
 EPS = 1e-7
+
+
+class ResBlock(nn.Module):
+    def __init__(self, in_channels):
+        super(ResBlock, self).__init__()
+        self.conv1 = nn.Conv2d(in_channels, in_channels, kernel_size=3, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(in_channels)
+        self.lrelu = nn.LeakyReLU(0.2, inplace=True)
+        self.conv2 = nn.Conv2d(in_channels, in_channels, kernel_size=3, padding=1, bias=False)
+        self.bn2 = nn.BatchNorm2d(in_channels)
+
+    def forward(self, x):
+        residual = x
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = self.lrelu(out)
+        out = self.conv2(out)
+        out = self.bn2(out)
+        out += residual  # Add skip connection
+        out = self.lrelu(out)
+        return out
 
 
 class Encoder(nn.Module):
@@ -27,6 +49,40 @@ class Encoder(nn.Module):
 
     def forward(self, input):
         return self.network(input).reshape(input.size(0),-1)
+    
+class EncoderOptimized(nn.Module):
+    def __init__(self, cin, cout, size=64, nf=64, activation=nn.Tanh):
+        super(Encoder, self).__init__()
+        extra = int(np.log2(size) - 6)
+
+        def block(in_feat, out_feat, normalize=True):
+            layers = [nn.Conv2d(in_feat, out_feat, kernel_size=4, stride=2, padding=1, bias=False)]
+            if normalize:
+                layers.append(nn.BatchNorm2d(out_feat, 0.8))
+            layers.append(nn.LeakyReLU(0.2, inplace=True))
+            return layers
+
+        self.model = nn.Sequential(
+            *block(cin, nf, normalize=False),  # 64x64 -> 32x32
+            *block(nf, nf * 2),  # 32x32 -> 16x16
+            *block(nf * 2, nf * 4),  # 16x16 -> 8x8
+            *block(nf * 4, nf * 8),  # 8x8 -> 4x4
+        )
+
+        for i in range(extra):
+            nf *= 2
+            self.model += block(nf*4, nf*8)  # dynamic extra layers
+
+        self.model += [nn.Conv2d(nf*8, nf*8, kernel_size=4, stride=1, padding=0, bias=False),  # 4x4 -> 1x1
+                       nn.ReLU(inplace=True),
+                       nn.Conv2d(nf*8, cout, kernel_size=1, stride=1, padding=0, bias=False)]
+
+        if activation is not None:
+            self.model += [activation()]
+
+    def forward(self, input):
+        return self.model(input).reshape(input.size(0),-1)
+
 
 
 class EDDeconv(nn.Module):
@@ -71,6 +127,57 @@ class EDDeconv(nn.Module):
             nn.Conv2d(nf, nf, kernel_size=3, stride=1, padding=1, bias=False),
             nn.GroupNorm(16, nf),
             nn.ReLU(inplace=True),
+            nn.Upsample(scale_factor=2, mode='nearest'),  # 32x32 -> 64x64
+            nn.Conv2d(nf, nf, kernel_size=3, stride=1, padding=1, bias=False),
+            nn.GroupNorm(16, nf),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(nf, nf, kernel_size=5, stride=1, padding=2, bias=False),
+            nn.GroupNorm(16, nf),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(nf, cout, kernel_size=5, stride=1, padding=2, bias=False)]
+        if activation is not None:
+            network += [activation()]
+        self.network = nn.Sequential(*network)
+
+    def forward(self, input):
+        return self.network(input)
+
+
+class EDDeconvOptimized(nn.Module):
+    def __init__(self, cin, cout, zdim=128, nf=64, activation=nn.Tanh):
+        super(EDDeconv, self).__init__()
+        ## downsampling
+        network = [
+            nn.Conv2d(cin, nf, kernel_size=4, stride=2, padding=1, bias=False),  # 64x64 -> 32x32
+            nn.BatchNorm2d(nf),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Conv2d(nf, nf*2, kernel_size=4, stride=2, padding=1, bias=False),  # 32x32 -> 16x16
+            nn.BatchNorm2d(nf*2),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Conv2d(nf*2, nf*4, kernel_size=4, stride=2, padding=1, bias=False),  # 16x16 -> 8x8
+            nn.BatchNorm2d(nf*4),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Conv2d(nf*4, nf*8, kernel_size=4, stride=2, padding=1, bias=False),  # 8x8 -> 4x4
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Conv2d(nf*8, zdim, kernel_size=4, stride=1, padding=0, bias=False),  # 4x4 -> 1x1
+            nn.ReLU(inplace=True)]
+        ## upsampling
+        network += [
+            nn.ConvTranspose2d(zdim, nf*8, kernel_size=4, stride=1, padding=0, bias=False),  # 1x1 -> 4x4
+            nn.ReLU(inplace=True),
+            ResBlock(nf*8),
+            nn.ConvTranspose2d(nf*8, nf*4, kernel_size=4, stride=2, padding=1, bias=False),  # 4x4 -> 8x8
+            nn.BatchNorm2d(nf*4),
+            nn.ReLU(inplace=True),
+            ResBlock(nf*4),
+            nn.ConvTranspose2d(nf*4, nf*2, kernel_size=4, stride=2, padding=1, bias=False),  # 8x8 -> 16x16
+            nn.BatchNorm2d(nf*2),
+            nn.ReLU(inplace=True),
+            ResBlock(nf*2),
+            nn.ConvTranspose2d(nf*2, nf, kernel_size=4, stride=2, padding=1, bias=False),  # 16x16 -> 32x32
+            nn.BatchNorm2d(nf),
+            nn.ReLU(inplace=True),
+            ResBlock(nf),
             nn.Upsample(scale_factor=2, mode='nearest'),  # 32x32 -> 64x64
             nn.Conv2d(nf, nf, kernel_size=3, stride=1, padding=1, bias=False),
             nn.GroupNorm(16, nf),

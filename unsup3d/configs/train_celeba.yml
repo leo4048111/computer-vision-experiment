@@ -1,7 +1,7 @@
 ## train celeba
 ## trainer
 run_train: true
-num_epochs: 30
+num_epochs: 3
 batch_size: 6
 checkpoint_dir: results/celeba
 save_checkpoint_freq: 1

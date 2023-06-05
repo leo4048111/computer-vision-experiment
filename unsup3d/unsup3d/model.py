@@ -211,7 +211,11 @@ class Unsup3D():
         lam_flip = 1 if self.trainer.current_epoch < self.lam_flip_start_epoch else self.lam_flip
         self.loss_total = self.loss_l1_im + lam_flip*self.loss_l1_im_flip + self.lam_perc*(self.loss_perc_im + lam_flip*self.loss_perc_im_flip) + self.lam_depth_sm*self.loss_depth_sm
 
-        metrics = {'loss': self.loss_total}
+        metrics = {'loss_total': self.loss_total,
+                   'loss_l1_im': self.loss_l1_im,
+                   'loss_l1_im_flip': self.loss_l1_im_flip,
+                   'loss_perc_im': self.loss_perc_im,
+                   'loss_perc_im_flip': self.loss_perc_im_flip}
 
         ## compute accuracy if gt depth is available
         if self.load_gt_depth:

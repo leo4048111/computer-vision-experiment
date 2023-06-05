@@ -539,8 +539,12 @@ class GAN2Shape():
         self.loss_total = self.loss_l1_im + self.lam_perc*self.loss_perc_im + self.lam_smooth*self.loss_smooth
         if (self.flip3 and self.mode == 'step3') or self.flip1:
             self.loss_total += self.loss_l1_im_flip + self.lam_perc*self.loss_perc_im_flip
-
-        metrics = {'loss': self.loss_total}
+        
+        metrics = {'loss_total': self.loss_total,
+                   'loss_l1_im': self.loss_l1_im,
+                   'loss_l1_im_flip': self.loss_l1_im_flip,
+                   'loss_perc_im': self.loss_perc_im,
+                   'loss_perc_im_flip': self.loss_perc_im_flip}
 
         ## compute accuracy if gt depth is available
         if hasattr(self, 'depth_gt'):
@@ -625,7 +629,11 @@ class GAN2Shape():
         self.loss_latent_norm = torch.mean(offset ** 2)
         self.loss_total = self.loss_l1 + self.loss_rec + self.lam_regular * self.loss_latent_norm
 
-        metrics = {'loss': self.loss_total}
+        metrics = {'loss_total': self.loss_total,
+            'loss_l1': self.loss_l1,
+            'loss_rec': self.loss_rec,
+            'loss_latent_norm': self.loss_latent_norm}
+
         return metrics
 
     def step2_collect(self):
@@ -731,7 +739,11 @@ class GAN2Shape():
         if self.flip3:
             self.loss_total += self.loss_l1_im_flip + self.lam_perc*self.loss_perc_im_flip
 
-        metrics['loss'] = self.loss_total
+        metrics['loss_total'] = self.loss_total
+        metrics['loss_l1_im'] = self.loss_l1_im
+        metrics['loss_l1_im_flip'] = self.loss_l1_im_flip
+        metrics['loss_perc_im'] = self.loss_perc_im
+        metrics['loss_perc_im_flip'] = self.loss_perc_im_flip
 
         return metrics
 

@@ -2,7 +2,7 @@
 ## trainer
 run_train: true
 num_epochs: 30
-batch_size: 64
+batch_size: 16
 checkpoint_dir: results/synface
 save_checkpoint_freq: 1
 keep_num_checkpoint: 2

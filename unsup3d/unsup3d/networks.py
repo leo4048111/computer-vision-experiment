@@ -62,7 +62,7 @@ class EncoderOptimized(nn.Module):
             layers.append(nn.LeakyReLU(0.2, inplace=True))
             return layers
 
-        self.model = nn.Sequential(
+        network = nn.Sequential(
             *block(cin, nf, normalize=False),  # 64x64 -> 32x32
             *block(nf, nf * 2),  # 32x32 -> 16x16
             *block(nf * 2, nf * 4),  # 16x16 -> 8x8
@@ -71,18 +71,20 @@ class EncoderOptimized(nn.Module):
 
         for i in range(extra):
             nf *= 2
-            self.model += block(nf*4, nf*8)  # dynamic extra layers
+            network += block(nf*4, nf*8)  # dynamic extra layers
 
-        self.model += [nn.Conv2d(nf*8, nf*8, kernel_size=4, stride=1, padding=0, bias=False),  # 4x4 -> 1x1
-                       nn.ReLU(inplace=True),
-                       nn.Conv2d(nf*8, cout, kernel_size=1, stride=1, padding=0, bias=False)]
+        network += [
+            nn.Conv2d(nf*8, nf*8, kernel_size=4, stride=1, padding=0, bias=False),  # 4x4 -> 1x1
+            nn.ReLU(inplace=True),
+            nn.Conv2d(nf*8, cout, kernel_size=1, stride=1, padding=0, bias=False)]
 
         if activation is not None:
-            self.model += [activation()]
+            network += [activation()]
+
+        self.network = nn.Sequential(*network)
 
     def forward(self, input):
-        return self.model(input).reshape(input.size(0),-1)
-
+        return self.network(input).reshape(input.size(0),-1)
 
 
 class EDDeconv(nn.Module):

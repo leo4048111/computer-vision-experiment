@@ -52,7 +52,7 @@ class Encoder(nn.Module):
     
 class EncoderOptimized(nn.Module):
     def __init__(self, cin, cout, size=64, nf=64, activation=nn.Tanh):
-        super(Encoder, self).__init__()
+        super(EncoderOptimized, self).__init__()
         extra = int(np.log2(size) - 6)
 
         def block(in_feat, out_feat, normalize=True):
@@ -145,7 +145,7 @@ class EDDeconv(nn.Module):
 
 class EDDeconvOptimized(nn.Module):
     def __init__(self, cin, cout, zdim=128, nf=64, activation=nn.Tanh):
-        super(EDDeconv, self).__init__()
+        super(EDDeconvOptimized, self).__init__()
         ## downsampling
         network = [
             nn.Conv2d(cin, nf, kernel_size=4, stride=2, padding=1, bias=False),  # 64x64 -> 32x32

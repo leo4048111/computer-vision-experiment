@@ -37,10 +37,17 @@ class Unsup3D():
         self.renderer = Renderer(cfgs)
 
         ## networks and optimizers
-        self.netD = networks.EDDeconv(cin=3, cout=1, nf=64, zdim=256, activation=None)
-        self.netA = networks.EDDeconv(cin=3, cout=3, nf=64, zdim=256)
-        self.netL = networks.Encoder(cin=3, cout=4, nf=32)
-        self.netV = networks.Encoder(cin=3, cout=6, nf=32)
+        # self.netD = networks.EDDeconv(cin=3, cout=1, nf=64, zdim=256, activation=None)
+        # self.netA = networks.EDDeconv(cin=3, cout=3, nf=64, zdim=256)
+        # self.netL = networks.Encoder(cin=3, cout=4, nf=32)
+        # self.netV = networks.Encoder(cin=3, cout=6, nf=32)
+
+        # Optimized EDDeconv and Encoder for comparison
+        self.netD = networks.EDDeconvOptimized(cin=3, cout=1, nf=64, zdim=256, activation=None)
+        self.netA = networks.EDDeconvOptimized(cin=3, cout=3, nf=64, zdim=256)
+        self.netL = networks.EncoderOptimized(cin=3, cout=4, nf=32)
+        self.netV = networks.EncoderOptimized(cin=3, cout=6, nf=32)
+
         if self.use_conf_map:
             self.netC = networks.ConfNet(cin=3, cout=2, nf=64, zdim=128)
         self.network_names = [k for k in vars(self) if 'net' in k]

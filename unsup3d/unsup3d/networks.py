@@ -73,10 +73,11 @@ class EncoderOptimized(nn.Module):
             nf *= 2
             network += block(nf*4, nf*8)  # dynamic extra layers
 
-        network += [
+        network += nn.Sequential([
             nn.Conv2d(nf*8, nf*8, kernel_size=4, stride=1, padding=0, bias=False),  # 4x4 -> 1x1
             nn.ReLU(inplace=True),
-            nn.Conv2d(nf*8, cout, kernel_size=1, stride=1, padding=0, bias=False)]
+            nn.Conv2d(nf*8, cout, kernel_size=1, stride=1, padding=0, bias=False)
+            ])
 
         if activation is not None:
             network += [activation()]

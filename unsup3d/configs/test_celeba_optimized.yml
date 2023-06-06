@@ -1,10 +1,10 @@
 ## test celeba
 ## trainer
 run_test: true
-batch_size: 6
-checkpoint_dir: results/celeba
+batch_size: 16
+checkpoint_dir: results/celeba_optimized
 checkpoint_name: checkpoint030.pth
-test_result_dir: results/celeba/test_results_checkpoint030
+test_result_dir: results/celeba_optimized/test_results_checkpoint030
 
 ## dataloader
 num_workers: 1
@@ -13,7 +13,7 @@ load_gt_depth: false
 test_data_dir: data/celeba_cropped/test
 
 ## model
-model_name: unsup3d_celeba
+model_name: unsup3d_celeba_optimized
 min_depth: 0.9
 max_depth: 1.1
 xyz_rotation_range: 60  # (-r,r) in degrees

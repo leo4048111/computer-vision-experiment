@@ -9,7 +9,7 @@ joint_train: false  # true: joint train on multiple images
 independent: true  # true: each process has a different input image
 reset_weight: true  # true: reset model weights after each epoch
 save_results: true
-num_stage: 4
+num_stage: 1
 flip1_cfg: [false, false, false, false]
 flip3_cfg: [true, false, false, false]
 stage_len_dict:

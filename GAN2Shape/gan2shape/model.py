@@ -542,9 +542,10 @@ class GAN2Shape():
         
         metrics = {'loss_total': self.loss_total,
                    'loss_l1_im': self.loss_l1_im,
-                   'loss_l1_im_flip': self.loss_l1_im_flip,
+                   # 'loss_l1_im_flip': self.loss_l1_im_flip,
                    'loss_perc_im': self.loss_perc_im,
-                   'loss_perc_im_flip': self.loss_perc_im_flip}
+                   # 'loss_perc_im_flip': self.loss_perc_im_flip
+                    }
 
         ## compute accuracy if gt depth is available
         if hasattr(self, 'depth_gt'):
